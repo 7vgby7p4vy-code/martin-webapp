@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="5마틴">
+  <meta name="theme-color" content="#f2f3f5">
+  <title>5마틴 계산기</title>
+  <style>
+    :root {
+      --bg:#f2f3f5; --card:#fff; --text:#171717; --sub:#666;
+      --blue:#1677ff; --red:#e53935; --green:#17964a; --black:#111;
+      --yellow:#fff5cc; --soft:#eef6ff; --quote:#f8f9fc;
+      --shadow:0 6px 18px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;overscroll-behavior:none}
+    body{padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+    .app{width:100%;max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;gap:7px;padding:8px 0}
+    h1{font-size:17px;text-align:center;margin:0;font-weight:900}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#e3e5e8;padding:4px;border-radius:12px}
+    button{cursor:pointer;border:0;user-select:none;touch-action:manipulation}
+    .tab{border-radius:9px;padding:8px 4px;font-weight:900;font-size:14px;color:#555;background:transparent}
+    .tab.active{background:#fff;color:#111;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .card{background:var(--card);border-radius:14px;padding:10px;box-shadow:var(--shadow)}
+    .soft{background:var(--soft)} .yellow{background:var(--yellow)}
+    .card-title{text-align:center;color:var(--sub);font-size:12px;font-weight:800;margin-bottom:4px}
+    .profit-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .metric{text-align:center;min-width:0}
+    .label{font-size:11px;color:var(--sub);margin-bottom:2px}
+    .value{font-size:19px;font-weight:950;letter-spacing:-.5px;line-height:1.1;white-space:nowrap}
+    .blue{color:var(--blue)} .red{color:var(--red)} .green{color:var(--green)}
+    .loss-inline{display:inline-block;color:var(--red);font-size:12px;font-weight:950;margin-left:2px}
+    .small-line{text-align:center;font-size:11px;color:var(--sub);margin-top:5px;line-height:1.25}
+    .system-row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .round{font-size:29px;font-weight:950;letter-spacing:-.8px;line-height:1}
+    .right-info{text-align:right;font-size:12px;line-height:1.35;color:var(--sub)}
+    .right-info strong{display:block;color:var(--text);font-size:14px}
+    .input-row{display:grid;grid-template-columns:1fr 86px;gap:8px}
+    input{width:100%;border:1px solid #d5d7db;border-radius:12px;padding:11px 12px;font-size:17px;outline:none;background:#fff}
+    input:focus{border-color:var(--blue)}
+    .save-btn{border-radius:12px;background:var(--black);color:#fff;font-size:15px;font-weight:950}
+    .stake-card{text-align:center}
+    .stake{font-size:31px;font-weight:950;letter-spacing:-1px;line-height:1;margin:4px 0}
+    .hint{font-size:11px;color:var(--sub);line-height:1.25}
+    .action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .action{color:#fff;border-radius:13px;padding:12px 8px;font-size:17px;font-weight:950}
+    .hit{background:var(--blue)} .miss{background:var(--red)}
+    .message{min-height:42px;max-height:54px;overflow:hidden;text-align:center;font-size:11px;color:var(--sub);line-height:1.35;white-space:pre-line;padding:2px 8px}
+    .quote-card{margin-top:auto;background:var(--quote);border:1px solid rgba(0,0,0,.04);border-radius:13px;padding:9px 10px;text-align:center;box-shadow:var(--shadow)}
+    .quote-label{font-size:10px;color:var(--sub);font-weight:900;margin-bottom:3px}
+    .quote-text{font-size:12px;line-height:1.35;color:#333;font-weight:800;word-break:keep-all}
+    .reset-row{display:flex;justify-content:center;gap:18px;padding:0 0 4px}
+    .link-btn{background:transparent;color:var(--red);font-size:12px;font-weight:850;padding:6px 4px}
+    .danger{font-weight:950}
+    @media(max-height:740px){
+      .app{gap:5px;padding-top:5px} .card{padding:8px;border-radius:12px} h1{font-size:16px}
+      .tab{padding:7px 4px} .value{font-size:17px} .round{font-size:26px} .stake{font-size:28px}
+      .action{padding:10px 8px} input{padding:9px 10px} .message{min-height:34px;max-height:44px}
+      .quote-card{padding:7px 8px} .quote-text{font-size:11px}
+    }
+    @media(max-width:340px){
+      body{padding-left:6px;padding-right:6px} .value{font-size:15px} .loss-inline{display:block;margin-left:0;margin-top:2px}
+      .stake{font-size:25px} .round{font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>5마틴 계산기</h1>
+
+    <section class="tabs">
+      <button class="tab active" id="tab1" type="button">1번 운영</button>
+      <button class="tab" id="tab2" type="button">2번 운영</button>
+    </section>
+
+    <section class="card">
+      <div class="card-title">통합 수익</div>
+      <div class="profit-row">
+        <div class="metric">
+          <div class="label">누적수익</div>
+          <div class="value blue" id="totalAccumulatedProfit">0원</div>
+        </div>
+        <div class="metric">
+          <div class="label">원금수익</div>
+          <div class="value"><span id="totalPrincipalProfit">0원</span><span class="loss-inline" id="totalPendingLoss"></span></div>
+        </div>
+      </div>
+      <div class="small-line" id="splitLoss">1번 -0원 / 2번 -0원</div>
+    </section>
+
+    <section class="card soft">
+      <div class="system-row">
+        <div>
+          <div class="label" id="systemLabel">1번 운영</div>
+          <div class="round" id="currentRound">1회차</div>
+        </div>
+        <div class="right-info">
+          <strong id="savedOdds">배당 3.7</strong>
+          <span id="cycleLoss">사이클 손실 0원</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-row">
+      <input id="oddsInput" inputmode="decimal" placeholder="배당 입력" autocomplete="off">
+      <button class="save-btn" id="saveBtn" type="button">저장</button>
+    </section>
+
+    <section class="card yellow stake-card">
+      <div class="label">이번 회차 베팅금</div>
+      <div class="stake" id="stake">0원</div>
+      <div class="hint">적중 시 손실복구 후 회차×20,000원 누적 / 초과분 원금수익</div>
+    </section>
+
+    <section class="action-row">
+      <button class="action hit" id="hitBtn" type="button">적중</button>
+      <button class="action miss" id="missBtn" type="button">미적중</button>
+    </section>
+
+    <section class="message" id="message">배당 입력 후 저장</section>
+
+    <section class="quote-card">
+      <div class="quote-label" id="quoteDay">오늘의 동기부여</div>
+      <div class="quote-text" id="dailyQuote">작은 승리가 큰 변화를 만든다.</div>
+    </section>
+
+    <section class="reset-row">
+      <button class="link-btn" id="resetCurrentBtn" type="button">1번 초기화</button>
+      <button class="link-btn danger" id="resetAllBtn" type="button">전체 초기화</button>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "martin_webapp_state_v2";
+    const DEFAULT_STATE = {
+      selectedSystem:1,
+      totalAccumulatedProfit:0,
+      totalPrincipalProfit:0,
+      systems:{
+        1:{currentRound:1,savedOdds:3.7,currentCycleLoss:0,pendingPrincipalLoss:0},
+        2:{currentRound:1,savedOdds:3.7,currentCycleLoss:0,pendingPrincipalLoss:0}
+      }
+    };
+    const TARGET_PROFIT_PER_ROUND = 20000;
+    const MAX_ROUND = 5;
+    const QUOTES = ["1. 작은 승리가 큰 변화를 만든다.", "2. 오늘의 집중이 내일의 여유를 만든다.", "3. 흔들려도 멈추지 않으면 앞으로 간다.", "4. 기록하는 사람은 같은 실수를 줄인다.", "5. 감정이 아니라 기준으로 움직여라.", "6. 천천히 가도 방향이 맞으면 된다.", "7. 오늘 버틴 만큼 내일은 단단해진다.", "8. 계획은 감정을 이기는 장치다.", "9. 확률보다 중요한 것은 관리다.", "10. 멈추기 전에 한 번 더 확인하라.", "11. 작은 절제가 큰 손실을 막는다.", "12. 이익보다 중요한 것은 리듬이다.", "13. 오늘의 원칙이 내일의 결과다.", "14. 급할수록 숫자를 다시 봐라.", "15. 승리는 차분한 사람 쪽으로 기운다.", "16. 한 번의 선택이 하루를 바꾼다.", "17. 복구보다 예방이 쉽다.", "18. 좋은 판단은 조용할 때 나온다.", "19. 흐름에 취하지 말고 기준을 지켜라.", "20. 기회는 준비된 금액 안에서만 기회다.", "21. 멈출 줄 아는 사람이 오래 간다.", "22. 작은 손실을 인정하는 힘이 필요하다.", "23. 오늘의 냉정함이 내일의 자산이다.", "24. 수익은 관리에서 완성된다.", "25. 버는 것보다 지키는 것이 먼저다.", "26. 한 회차보다 전체 흐름을 봐라.", "27. 기록은 감정을 꺾는 증거다.", "28. 욕심은 계산기를 무력화한다.", "29. 정확한 입력이 정확한 결과를 만든다.", "30. 지금의 침착함이 가장 큰 무기다.", "31. 운보다 중요한 것은 멈추는 기준이다.", "32. 숫자를 믿고 기분을 의심하라.", "33. 좋은 하루는 좋은 판단 하나에서 시작된다.", "34. 작은 원칙을 지키는 사람이 오래 남는다.", "35. 손실을 숨기지 말고 관리하라.", "36. 냉정함은 가장 싼 보험이다.", "37. 오늘의 실수는 내일의 규칙이 된다.", "38. 계산된 선택만이 반복될 가치가 있다.", "39. 불리할수록 단순하게 생각하라.", "40. 무리하지 않는 것이 실력이다.", "41. 조급함은 가장 비싼 수수료다.", "42. 좋은 결과는 좋은 습관의 부산물이다.", "43. 흔들릴 때일수록 원칙을 짧게 잡아라.", "44. 지키는 사람이 결국 이긴다.", "45. 기록 없는 판단은 추측일 뿐이다.", "46. 오늘의 절제가 내일의 선택권이다.", "47. 승부보다 중요한 것은 생존이다.", "48. 계산은 차갑게, 행동은 천천히.", "49. 큰 욕심보다 작은 확정이 낫다.", "50. 실수는 빠르게 인정할수록 싸다.", "51. 작은 승리가 큰 변화를 만든다.", "52. 오늘의 집중이 내일의 여유를 만든다.", "53. 흔들려도 멈추지 않으면 앞으로 간다.", "54. 기록하는 사람은 같은 실수를 줄인다.", "55. 감정이 아니라 기준으로 움직여라.", "56. 천천히 가도 방향이 맞으면 된다.", "57. 오늘 버틴 만큼 내일은 단단해진다.", "58. 계획은 감정을 이기는 장치다.", "59. 확률보다 중요한 것은 관리다.", "60. 멈추기 전에 한 번 더 확인하라.", "61. 작은 절제가 큰 손실을 막는다.", "62. 이익보다 중요한 것은 리듬이다.", "63. 오늘의 원칙이 내일의 결과다.", "64. 급할수록 숫자를 다시 봐라.", "65. 승리는 차분한 사람 쪽으로 기운다.", "66. 한 번의 선택이 하루를 바꾼다.", "67. 복구보다 예방이 쉽다.", "68. 좋은 판단은 조용할 때 나온다.", "69. 흐름에 취하지 말고 기준을 지켜라.", "70. 기회는 준비된 금액 안에서만 기회다.", "71. 멈출 줄 아는 사람이 오래 간다.", "72. 작은 손실을 인정하는 힘이 필요하다.", "73. 오늘의 냉정함이 내일의 자산이다.", "74. 수익은 관리에서 완성된다.", "75. 버는 것보다 지키는 것이 먼저다.", "76. 한 회차보다 전체 흐름을 봐라.", "77. 기록은 감정을 꺾는 증거다.", "78. 욕심은 계산기를 무력화한다.", "79. 정확한 입력이 정확한 결과를 만든다.", "80. 지금의 침착함이 가장 큰 무기다.", "81. 운보다 중요한 것은 멈추는 기준이다.", "82. 숫자를 믿고 기분을 의심하라.", "83. 좋은 하루는 좋은 판단 하나에서 시작된다.", "84. 작은 원칙을 지키는 사람이 오래 남는다.", "85. 손실을 숨기지 말고 관리하라.", "86. 냉정함은 가장 싼 보험이다.", "87. 오늘의 실수는 내일의 규칙이 된다.", "88. 계산된 선택만이 반복될 가치가 있다.", "89. 불리할수록 단순하게 생각하라.", "90. 무리하지 않는 것이 실력이다.", "91. 조급함은 가장 비싼 수수료다.", "92. 좋은 결과는 좋은 습관의 부산물이다.", "93. 흔들릴 때일수록 원칙을 짧게 잡아라.", "94. 지키는 사람이 결국 이긴다.", "95. 기록 없는 판단은 추측일 뿐이다.", "96. 오늘의 절제가 내일의 선택권이다.", "97. 승부보다 중요한 것은 생존이다.", "98. 계산은 차갑게, 행동은 천천히.", "99. 큰 욕심보다 작은 확정이 낫다.", "100. 실수는 빠르게 인정할수록 싸다.", "101. 작은 승리가 큰 변화를 만든다.", "102. 오늘의 집중이 내일의 여유를 만든다.", "103. 흔들려도 멈추지 않으면 앞으로 간다.", "104. 기록하는 사람은 같은 실수를 줄인다.", "105. 감정이 아니라 기준으로 움직여라.", "106. 천천히 가도 방향이 맞으면 된다.", "107. 오늘 버틴 만큼 내일은 단단해진다.", "108. 계획은 감정을 이기는 장치다.", "109. 확률보다 중요한 것은 관리다.", "110. 멈추기 전에 한 번 더 확인하라.", "111. 작은 절제가 큰 손실을 막는다.", "112. 이익보다 중요한 것은 리듬이다.", "113. 오늘의 원칙이 내일의 결과다.", "114. 급할수록 숫자를 다시 봐라.", "115. 승리는 차분한 사람 쪽으로 기운다.", "116. 한 번의 선택이 하루를 바꾼다.", "117. 복구보다 예방이 쉽다.", "118. 좋은 판단은 조용할 때 나온다.", "119. 흐름에 취하지 말고 기준을 지켜라.", "120. 기회는 준비된 금액 안에서만 기회다.", "121. 멈출 줄 아는 사람이 오래 간다.", "122. 작은 손실을 인정하는 힘이 필요하다.", "123. 오늘의 냉정함이 내일의 자산이다.", "124. 수익은 관리에서 완성된다.", "125. 버는 것보다 지키는 것이 먼저다.", "126. 한 회차보다 전체 흐름을 봐라.", "127. 기록은 감정을 꺾는 증거다.", "128. 욕심은 계산기를 무력화한다.", "129. 정확한 입력이 정확한 결과를 만든다.", "130. 지금의 침착함이 가장 큰 무기다.", "131. 운보다 중요한 것은 멈추는 기준이다.", "132. 숫자를 믿고 기분을 의심하라.", "133. 좋은 하루는 좋은 판단 하나에서 시작된다.", "134. 작은 원칙을 지키는 사람이 오래 남는다.", "135. 손실을 숨기지 말고 관리하라.", "136. 냉정함은 가장 싼 보험이다.", "137. 오늘의 실수는 내일의 규칙이 된다.", "138. 계산된 선택만이 반복될 가치가 있다.", "139. 불리할수록 단순하게 생각하라.", "140. 무리하지 않는 것이 실력이다.", "141. 조급함은 가장 비싼 수수료다.", "142. 좋은 결과는 좋은 습관의 부산물이다.", "143. 흔들릴 때일수록 원칙을 짧게 잡아라.", "144. 지키는 사람이 결국 이긴다.", "145. 기록 없는 판단은 추측일 뿐이다.", "146. 오늘의 절제가 내일의 선택권이다.", "147. 승부보다 중요한 것은 생존이다.", "148. 계산은 차갑게, 행동은 천천히.", "149. 큰 욕심보다 작은 확정이 낫다.", "150. 실수는 빠르게 인정할수록 싸다.", "151. 작은 승리가 큰 변화를 만든다.", "152. 오늘의 집중이 내일의 여유를 만든다.", "153. 흔들려도 멈추지 않으면 앞으로 간다.", "154. 기록하는 사람은 같은 실수를 줄인다.", "155. 감정이 아니라 기준으로 움직여라.", "156. 천천히 가도 방향이 맞으면 된다.", "157. 오늘 버틴 만큼 내일은 단단해진다.", "158. 계획은 감정을 이기는 장치다.", "159. 확률보다 중요한 것은 관리다.", "160. 멈추기 전에 한 번 더 확인하라.", "161. 작은 절제가 큰 손실을 막는다.", "162. 이익보다 중요한 것은 리듬이다.", "163. 오늘의 원칙이 내일의 결과다.", "164. 급할수록 숫자를 다시 봐라.", "165. 승리는 차분한 사람 쪽으로 기운다.", "166. 한 번의 선택이 하루를 바꾼다.", "167. 복구보다 예방이 쉽다.", "168. 좋은 판단은 조용할 때 나온다.", "169. 흐름에 취하지 말고 기준을 지켜라.", "170. 기회는 준비된 금액 안에서만 기회다.", "171. 멈출 줄 아는 사람이 오래 간다.", "172. 작은 손실을 인정하는 힘이 필요하다.", "173. 오늘의 냉정함이 내일의 자산이다.", "174. 수익은 관리에서 완성된다.", "175. 버는 것보다 지키는 것이 먼저다.", "176. 한 회차보다 전체 흐름을 봐라.", "177. 기록은 감정을 꺾는 증거다.", "178. 욕심은 계산기를 무력화한다.", "179. 정확한 입력이 정확한 결과를 만든다.", "180. 지금의 침착함이 가장 큰 무기다.", "181. 운보다 중요한 것은 멈추는 기준이다.", "182. 숫자를 믿고 기분을 의심하라.", "183. 좋은 하루는 좋은 판단 하나에서 시작된다.", "184. 작은 원칙을 지키는 사람이 오래 남는다.", "185. 손실을 숨기지 말고 관리하라.", "186. 냉정함은 가장 싼 보험이다.", "187. 오늘의 실수는 내일의 규칙이 된다.", "188. 계산된 선택만이 반복될 가치가 있다.", "189. 불리할수록 단순하게 생각하라.", "190. 무리하지 않는 것이 실력이다.", "191. 조급함은 가장 비싼 수수료다.", "192. 좋은 결과는 좋은 습관의 부산물이다.", "193. 흔들릴 때일수록 원칙을 짧게 잡아라.", "194. 지키는 사람이 결국 이긴다.", "195. 기록 없는 판단은 추측일 뿐이다.", "196. 오늘의 절제가 내일의 선택권이다.", "197. 승부보다 중요한 것은 생존이다.", "198. 계산은 차갑게, 행동은 천천히.", "199. 큰 욕심보다 작은 확정이 낫다.", "200. 실수는 빠르게 인정할수록 싸다.", "201. 작은 승리가 큰 변화를 만든다.", "202. 오늘의 집중이 내일의 여유를 만든다.", "203. 흔들려도 멈추지 않으면 앞으로 간다.", "204. 기록하는 사람은 같은 실수를 줄인다.", "205. 감정이 아니라 기준으로 움직여라.", "206. 천천히 가도 방향이 맞으면 된다.", "207. 오늘 버틴 만큼 내일은 단단해진다.", "208. 계획은 감정을 이기는 장치다.", "209. 확률보다 중요한 것은 관리다.", "210. 멈추기 전에 한 번 더 확인하라.", "211. 작은 절제가 큰 손실을 막는다.", "212. 이익보다 중요한 것은 리듬이다.", "213. 오늘의 원칙이 내일의 결과다.", "214. 급할수록 숫자를 다시 봐라.", "215. 승리는 차분한 사람 쪽으로 기운다.", "216. 한 번의 선택이 하루를 바꾼다.", "217. 복구보다 예방이 쉽다.", "218. 좋은 판단은 조용할 때 나온다.", "219. 흐름에 취하지 말고 기준을 지켜라.", "220. 기회는 준비된 금액 안에서만 기회다.", "221. 멈출 줄 아는 사람이 오래 간다.", "222. 작은 손실을 인정하는 힘이 필요하다.", "223. 오늘의 냉정함이 내일의 자산이다.", "224. 수익은 관리에서 완성된다.", "225. 버는 것보다 지키는 것이 먼저다.", "226. 한 회차보다 전체 흐름을 봐라.", "227. 기록은 감정을 꺾는 증거다.", "228. 욕심은 계산기를 무력화한다.", "229. 정확한 입력이 정확한 결과를 만든다.", "230. 지금의 침착함이 가장 큰 무기다.", "231. 운보다 중요한 것은 멈추는 기준이다.", "232. 숫자를 믿고 기분을 의심하라.", "233. 좋은 하루는 좋은 판단 하나에서 시작된다.", "234. 작은 원칙을 지키는 사람이 오래 남는다.", "235. 손실을 숨기지 말고 관리하라.", "236. 냉정함은 가장 싼 보험이다.", "237. 오늘의 실수는 내일의 규칙이 된다.", "238. 계산된 선택만이 반복될 가치가 있다.", "239. 불리할수록 단순하게 생각하라.", "240. 무리하지 않는 것이 실력이다.", "241. 조급함은 가장 비싼 수수료다.", "242. 좋은 결과는 좋은 습관의 부산물이다.", "243. 흔들릴 때일수록 원칙을 짧게 잡아라.", "244. 지키는 사람이 결국 이긴다.", "245. 기록 없는 판단은 추측일 뿐이다.", "246. 오늘의 절제가 내일의 선택권이다.", "247. 승부보다 중요한 것은 생존이다.", "248. 계산은 차갑게, 행동은 천천히.", "249. 큰 욕심보다 작은 확정이 낫다.", "250. 실수는 빠르게 인정할수록 싸다.", "251. 작은 승리가 큰 변화를 만든다.", "252. 오늘의 집중이 내일의 여유를 만든다.", "253. 흔들려도 멈추지 않으면 앞으로 간다.", "254. 기록하는 사람은 같은 실수를 줄인다.", "255. 감정이 아니라 기준으로 움직여라.", "256. 천천히 가도 방향이 맞으면 된다.", "257. 오늘 버틴 만큼 내일은 단단해진다.", "258. 계획은 감정을 이기는 장치다.", "259. 확률보다 중요한 것은 관리다.", "260. 멈추기 전에 한 번 더 확인하라.", "261. 작은 절제가 큰 손실을 막는다.", "262. 이익보다 중요한 것은 리듬이다.", "263. 오늘의 원칙이 내일의 결과다.", "264. 급할수록 숫자를 다시 봐라.", "265. 승리는 차분한 사람 쪽으로 기운다.", "266. 한 번의 선택이 하루를 바꾼다.", "267. 복구보다 예방이 쉽다.", "268. 좋은 판단은 조용할 때 나온다.", "269. 흐름에 취하지 말고 기준을 지켜라.", "270. 기회는 준비된 금액 안에서만 기회다.", "271. 멈출 줄 아는 사람이 오래 간다.", "272. 작은 손실을 인정하는 힘이 필요하다.", "273. 오늘의 냉정함이 내일의 자산이다.", "274. 수익은 관리에서 완성된다.", "275. 버는 것보다 지키는 것이 먼저다.", "276. 한 회차보다 전체 흐름을 봐라.", "277. 기록은 감정을 꺾는 증거다.", "278. 욕심은 계산기를 무력화한다.", "279. 정확한 입력이 정확한 결과를 만든다.", "280. 지금의 침착함이 가장 큰 무기다.", "281. 운보다 중요한 것은 멈추는 기준이다.", "282. 숫자를 믿고 기분을 의심하라.", "283. 좋은 하루는 좋은 판단 하나에서 시작된다.", "284. 작은 원칙을 지키는 사람이 오래 남는다.", "285. 손실을 숨기지 말고 관리하라.", "286. 냉정함은 가장 싼 보험이다.", "287. 오늘의 실수는 내일의 규칙이 된다.", "288. 계산된 선택만이 반복될 가치가 있다.", "289. 불리할수록 단순하게 생각하라.", "290. 무리하지 않는 것이 실력이다.", "291. 조급함은 가장 비싼 수수료다.", "292. 좋은 결과는 좋은 습관의 부산물이다.", "293. 흔들릴 때일수록 원칙을 짧게 잡아라.", "294. 지키는 사람이 결국 이긴다.", "295. 기록 없는 판단은 추측일 뿐이다.", "296. 오늘의 절제가 내일의 선택권이다.", "297. 승부보다 중요한 것은 생존이다.", "298. 계산은 차갑게, 행동은 천천히.", "299. 큰 욕심보다 작은 확정이 낫다.", "300. 실수는 빠르게 인정할수록 싸다.", "301. 작은 승리가 큰 변화를 만든다.", "302. 오늘의 집중이 내일의 여유를 만든다.", "303. 흔들려도 멈추지 않으면 앞으로 간다.", "304. 기록하는 사람은 같은 실수를 줄인다.", "305. 감정이 아니라 기준으로 움직여라.", "306. 천천히 가도 방향이 맞으면 된다.", "307. 오늘 버틴 만큼 내일은 단단해진다.", "308. 계획은 감정을 이기는 장치다.", "309. 확률보다 중요한 것은 관리다.", "310. 멈추기 전에 한 번 더 확인하라.", "311. 작은 절제가 큰 손실을 막는다.", "312. 이익보다 중요한 것은 리듬이다.", "313. 오늘의 원칙이 내일의 결과다.", "314. 급할수록 숫자를 다시 봐라.", "315. 승리는 차분한 사람 쪽으로 기운다.", "316. 한 번의 선택이 하루를 바꾼다.", "317. 복구보다 예방이 쉽다.", "318. 좋은 판단은 조용할 때 나온다.", "319. 흐름에 취하지 말고 기준을 지켜라.", "320. 기회는 준비된 금액 안에서만 기회다.", "321. 멈출 줄 아는 사람이 오래 간다.", "322. 작은 손실을 인정하는 힘이 필요하다.", "323. 오늘의 냉정함이 내일의 자산이다.", "324. 수익은 관리에서 완성된다.", "325. 버는 것보다 지키는 것이 먼저다.", "326. 한 회차보다 전체 흐름을 봐라.", "327. 기록은 감정을 꺾는 증거다.", "328. 욕심은 계산기를 무력화한다.", "329. 정확한 입력이 정확한 결과를 만든다.", "330. 지금의 침착함이 가장 큰 무기다.", "331. 운보다 중요한 것은 멈추는 기준이다.", "332. 숫자를 믿고 기분을 의심하라.", "333. 좋은 하루는 좋은 판단 하나에서 시작된다.", "334. 작은 원칙을 지키는 사람이 오래 남는다.", "335. 손실을 숨기지 말고 관리하라.", "336. 냉정함은 가장 싼 보험이다.", "337. 오늘의 실수는 내일의 규칙이 된다.", "338. 계산된 선택만이 반복될 가치가 있다.", "339. 불리할수록 단순하게 생각하라.", "340. 무리하지 않는 것이 실력이다.", "341. 조급함은 가장 비싼 수수료다.", "342. 좋은 결과는 좋은 습관의 부산물이다.", "343. 흔들릴 때일수록 원칙을 짧게 잡아라.", "344. 지키는 사람이 결국 이긴다.", "345. 기록 없는 판단은 추측일 뿐이다.", "346. 오늘의 절제가 내일의 선택권이다.", "347. 승부보다 중요한 것은 생존이다.", "348. 계산은 차갑게, 행동은 천천히.", "349. 큰 욕심보다 작은 확정이 낫다.", "350. 실수는 빠르게 인정할수록 싸다.", "351. 작은 승리가 큰 변화를 만든다.", "352. 오늘의 집중이 내일의 여유를 만든다.", "353. 흔들려도 멈추지 않으면 앞으로 간다.", "354. 기록하는 사람은 같은 실수를 줄인다.", "355. 감정이 아니라 기준으로 움직여라.", "356. 천천히 가도 방향이 맞으면 된다.", "357. 오늘 버틴 만큼 내일은 단단해진다.", "358. 계획은 감정을 이기는 장치다.", "359. 확률보다 중요한 것은 관리다.", "360. 멈추기 전에 한 번 더 확인하라.", "361. 작은 절제가 큰 손실을 막는다.", "362. 이익보다 중요한 것은 리듬이다.", "363. 오늘의 원칙이 내일의 결과다.", "364. 급할수록 숫자를 다시 봐라.", "365. 승리는 차분한 사람 쪽으로 기운다."];
+
+    let state = loadState();
+    const $ = id => document.getElementById(id);
+    const els = {
+      tab1:$("tab1"), tab2:$("tab2"), totalAccumulatedProfit:$("totalAccumulatedProfit"),
+      totalPrincipalProfit:$("totalPrincipalProfit"), totalPendingLoss:$("totalPendingLoss"),
+      splitLoss:$("splitLoss"), systemLabel:$("systemLabel"), currentRound:$("currentRound"),
+      savedOdds:$("savedOdds"), cycleLoss:$("cycleLoss"), oddsInput:$("oddsInput"),
+      saveBtn:$("saveBtn"), stake:$("stake"), hitBtn:$("hitBtn"), missBtn:$("missBtn"),
+      message:$("message"), quoteDay:$("quoteDay"), dailyQuote:$("dailyQuote"),
+      resetCurrentBtn:$("resetCurrentBtn"), resetAllBtn:$("resetAllBtn")
+    };
+
+    function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return clone(DEFAULT_STATE);
+        const parsed = JSON.parse(raw);
+        return {
+          ...clone(DEFAULT_STATE),
+          ...parsed,
+          systems:{
+            1:{...DEFAULT_STATE.systems[1], ...(parsed.systems?.[1] || {})},
+            2:{...DEFAULT_STATE.systems[2], ...(parsed.systems?.[2] || {})}
+          }
+        };
+      } catch { return clone(DEFAULT_STATE); }
+    }
+    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function currentSystem() { return state.systems[state.selectedSystem]; }
+    function money(value) { return Math.round(Number(value)||0).toLocaleString("ko-KR")+"원"; }
+    function decimal(value) {
+      return (Number(value)||0).toLocaleString("ko-KR",{minimumFractionDigits:0,maximumFractionDigits:2});
+    }
+    function stakeForSystem(s) {
+      const odds = Number(s.savedOdds);
+      if (!Number.isFinite(odds) || odds <= 1) return 0;
+      const target = TARGET_PROFIT_PER_ROUND * s.currentRound;
+      return Math.ceil(((s.currentCycleLoss + target) / (odds - 1)) / 1000) * 1000;
+    }
+    function totalPendingLoss() {
+      return state.systems[1].pendingPrincipalLoss + state.systems[2].pendingPrincipalLoss;
+    }
+    function setMessage(text) { els.message.textContent = text; }
+    function dayOfYear(date) {
+      const start = new Date(date.getFullYear(),0,0);
+      return Math.floor((date - start) / 86400000);
+    }
+    function renderQuote() {
+      const d = dayOfYear(new Date());
+      const idx = (d - 1) % QUOTES.length;
+      els.quoteDay.textContent = "오늘의 동기부여 · " + d + "/365";
+      els.dailyQuote.textContent = QUOTES[idx];
+    }
+    function render() {
+      const s = currentSystem();
+      const pending = totalPendingLoss();
+
+      els.tab1.classList.toggle("active", state.selectedSystem === 1);
+      els.tab2.classList.toggle("active", state.selectedSystem === 2);
+      els.totalAccumulatedProfit.textContent = money(state.totalAccumulatedProfit);
+      els.totalPrincipalProfit.textContent = money(state.totalPrincipalProfit);
+      els.totalPrincipalProfit.className = state.totalPrincipalProfit >= 0 ? "green" : "red";
+      els.totalPendingLoss.textContent = pending > 0 ? "(-" + money(pending) + ")" : "";
+      els.splitLoss.textContent = "1번 -" + money(state.systems[1].pendingPrincipalLoss) + " / 2번 -" + money(state.systems[2].pendingPrincipalLoss);
+
+      els.systemLabel.textContent = state.selectedSystem + "번 운영";
+      els.currentRound.textContent = s.currentRound + "회차";
+      els.savedOdds.textContent = "배당 " + decimal(s.savedOdds);
+      els.cycleLoss.textContent = "사이클 손실 " + money(s.currentCycleLoss);
+      els.stake.textContent = money(stakeForSystem(s));
+      els.resetCurrentBtn.textContent = state.selectedSystem + "번 초기화";
+      els.oddsInput.value = decimal(s.savedOdds);
+
+      renderQuote();
+      saveState();
+    }
+    function selectSystem(num) {
+      state.selectedSystem = num;
+      setMessage(num + "번 운영 시작 / " + currentSystem().currentRound + "회차");
+      render();
+    }
+    function saveOdds() {
+      const odds = Number(els.oddsInput.value.trim().replace(",", "."));
+      if (!Number.isFinite(odds) || odds <= 1) {
+        setMessage("배당은 1보다 큰 숫자로 입력");
+        return;
+      }
+      const s = currentSystem();
+      s.savedOdds = odds;
+      setMessage(state.selectedSystem + "번 배당 " + decimal(s.savedOdds) + " 저장 / 베팅금 " + money(stakeForSystem(s)));
+      render();
+    }
+    function hit() {
+      const s = currentSystem();
+      const stake = stakeForSystem(s);
+      if (stake <= 0 || s.savedOdds <= 1) { setMessage("먼저 배당 저장"); return; }
+
+      if (!confirm("적중처리하시겠습니까?")) return;
+
+      const hitRound = s.currentRound;
+      const rawProfit = stake * (s.savedOdds - 1);
+      const recoveredLoss = s.currentCycleLoss;
+      const netProfit = rawProfit - recoveredLoss;
+      const accumulatedPart = TARGET_PROFIT_PER_ROUND * hitRound;
+      const principalPart = Math.max(0, netProfit - accumulatedPart);
+
+      state.totalAccumulatedProfit += accumulatedPart;
+      state.totalPrincipalProfit += principalPart;
+
+      const clearedLoss = s.pendingPrincipalLoss;
+      s.currentRound = 1;
+      s.currentCycleLoss = 0;
+      s.pendingPrincipalLoss = 0;
+
+      setMessage(
+        state.selectedSystem + "번 " + hitRound + "회차 적중\n" +
+        "적중수익 " + money(rawProfit) + " / 손실복구 " + money(recoveredLoss) + "\n" +
+        "누적 +" + money(accumulatedPart) + " / 원금 +" + money(principalPart) + "\n" +
+        "손실괄호 " + money(clearedLoss) + " 초기화"
+      );
+      render();
+    }
+    function miss() {
+      const s = currentSystem();
+      const stake = stakeForSystem(s);
+      if (stake <= 0 || s.savedOdds <= 1) { setMessage("먼저 배당 저장"); return; }
+
+      if (!confirm("미적중처리하시겠습니까?")) return;
+
+      const missedRound = s.currentRound;
+      s.currentCycleLoss += stake;
+      s.pendingPrincipalLoss += stake;
+
+      if (s.currentRound >= MAX_ROUND) {
+        const confirmedLoss = s.pendingPrincipalLoss;
+        state.totalPrincipalProfit -= confirmedLoss;
+        s.currentRound = 1;
+        s.currentCycleLoss = 0;
+        s.pendingPrincipalLoss = 0;
+
+        setMessage(state.selectedSystem + "번 5회차 미적중\n누적수익 차감 없음\n원금수익 -" + money(confirmedLoss) + " 확정 / 1회차 리셋");
+      } else {
+        s.currentRound += 1;
+        setMessage(state.selectedSystem + "번 " + missedRound + "회차 미적중\n손실 " + money(stake) + " 괄호 반영\n" + s.currentRound + "회차 이동");
+      }
+      render();
+    }
+    function resetCurrentSystem() {
+      if (!confirm(state.selectedSystem + "번 운영만 초기화하시겠습니까?")) return;
+      const s = currentSystem();
+      s.currentRound = 1;
+      s.savedOdds = 3.7;
+      s.currentCycleLoss = 0;
+      s.pendingPrincipalLoss = 0;
+      setMessage(state.selectedSystem + "번 운영만 초기화 / 통합 수익 유지");
+      render();
+    }
+    function resetAll() {
+      if (!confirm("전체 초기화할까요? 통합 수익까지 전부 0으로 돌아갑니다.")) return;
+      state = clone(DEFAULT_STATE);
+      setMessage("전체 초기화 완료");
+      render();
+    }
+
+    els.tab1.addEventListener("click", () => selectSystem(1));
+    els.tab2.addEventListener("click", () => selectSystem(2));
+    els.saveBtn.addEventListener("click", saveOdds);
+    els.hitBtn.addEventListener("click", hit);
+    els.missBtn.addEventListener("click", miss);
+    els.resetCurrentBtn.addEventListener("click", resetCurrentSystem);
+    els.resetAllBtn.addEventListener("click", resetAll);
+    els.oddsInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveOdds();
+        els.oddsInput.blur();
+      }
+    });
+
+    render();
+    setMessage(state.selectedSystem + "번 운영 시작 / " + currentSystem().currentRound + "회차");
+  </script>
+</body>
+</html>
